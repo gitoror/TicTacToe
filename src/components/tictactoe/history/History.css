@@ -1,6 +1,5 @@
-
 .history {
-    padding-inline: 2rem;
+  padding-inline: 2rem;
 }
 
 .history-item {
@@ -19,7 +18,6 @@
   transition: all 0.2s ease;
 
   cursor: pointer;
-
 }
 
 .history-item:hover {

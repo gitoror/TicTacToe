@@ -1,13 +1,11 @@
-import { BrowserRouter, Route, Routes } from 'react-router'
-import App from '../App'
-import { TicTacToePage } from '../pages/TicTacToePage'
+import { BrowserRouter, Route, Routes } from "react-router"
+import { TicTacToePage } from "../pages/TicTacToePage"
 
 export const RouterApplication = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/tictactoe" element={<TicTacToePage />} />
+        <Route path="/" element={<TicTacToePage />} />
       </Routes>
     </BrowserRouter>
   )
