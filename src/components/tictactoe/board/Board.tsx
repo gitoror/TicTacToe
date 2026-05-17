@@ -1,45 +1,42 @@
 import "./Board.css"
 
 export type BoardProps = {
-  squares: string[]
+  squares: (string | null)[]
+  bestMoveIndex: number | null
   onPlay: (i: number) => void
 }
 
-export const Board = ({ squares, onPlay: onPlay }: BoardProps) => {
-  const handleClickSquare = (i: number) => {
-    onPlay(i)
-  }
-
-  return (
-    <div className="board">
-      <div className="board-row">
-        <Square value={squares[0]} onClickSquare={() => handleClickSquare(0)} />
-        <Square value={squares[1]} onClickSquare={() => handleClickSquare(1)} />
-        <Square value={squares[2]} onClickSquare={() => handleClickSquare(2)} />
+export const Board = ({ squares, bestMoveIndex, onPlay }: BoardProps) => (
+  <div className="board">
+    {[0, 1, 2].map((row) => (
+      <div key={row} className="board-row">
+        {[0, 1, 2].map((col) => {
+          const index = row * 3 + col
+          return (
+            <Square
+              key={index}
+              value={squares[index]}
+              isHighlighted={bestMoveIndex === index}
+              onClickSquare={() => onPlay(index)}
+            />
+          )
+        })}
       </div>
-      <div className="board-row">
-        <Square value={squares[3]} onClickSquare={() => handleClickSquare(3)} />
-        <Square value={squares[4]} onClickSquare={() => handleClickSquare(4)} />
-        <Square value={squares[5]} onClickSquare={() => handleClickSquare(5)} />
-      </div>
-      <div className="board-row">
-        <Square value={squares[6]} onClickSquare={() => handleClickSquare(6)} />
-        <Square value={squares[7]} onClickSquare={() => handleClickSquare(7)} />
-        <Square value={squares[8]} onClickSquare={() => handleClickSquare(8)} />
-      </div>
-    </div>
-  )
-}
+    ))}
+  </div>
+)
 
 type SquareProps = {
-  value: string
+  value: string | null
+  isHighlighted: boolean
   onClickSquare: () => void
 }
 
-const Square = ({ value, onClickSquare }: SquareProps) => {
-  return (
-    <button className="square" onClick={onClickSquare}>
-      {value}
-    </button>
-  )
-}
+const Square = ({ value, isHighlighted, onClickSquare }: SquareProps) => (
+  <button
+    className={`square${isHighlighted ? " square--highlighted" : ""}`}
+    onClick={onClickSquare}
+  >
+    {value}
+  </button>
+)

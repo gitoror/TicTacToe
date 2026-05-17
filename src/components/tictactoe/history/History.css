@@ -1,5 +1,11 @@
 .history {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   padding-inline: 2rem;
+  padding-top: 1rem;
+
 }
 
 .history-item {
@@ -16,8 +22,8 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.5rem;
   transition: all 0.2s ease;
-
   cursor: pointer;
+  width: 7rem;
 }
 
 .history-item:hover {
