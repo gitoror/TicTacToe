@@ -1,7 +1,5 @@
-import { TicTacToe } from '../components/tictactoe/TicTacToe'
+import { TicTacToe } from "../features/tictactoe/TicTacToe"
 
 export const TicTacToePage = () => {
-  return (
-    <TicTacToe />
-  )
+  return <TicTacToe />
 }

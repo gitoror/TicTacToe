@@ -1,13 +1,13 @@
-import './Board.css'
+import "./Board.css"
 
 export type BoardProps = {
   squares: string[]
-  updateSquare: (i: number) => void
+  onPlay: (i: number) => void
 }
 
-export const Board = ({ squares, updateSquare }: BoardProps) => {
+export const Board = ({ squares, onPlay: onPlay }: BoardProps) => {
   const handleClickSquare = (i: number) => {
-    updateSquare(i)
+    onPlay(i)
   }
 
   return (
@@ -43,4 +43,3 @@ const Square = ({ value, onClickSquare }: SquareProps) => {
     </button>
   )
 }
-

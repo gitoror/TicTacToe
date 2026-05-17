@@ -1,0 +1,9 @@
+.tictactoe {
+  display: flex;
+  justify-content: space-evenly;
+}
+
+button.reset-button {
+  margin-top: 1rem;
+  text-transform: none;
+}

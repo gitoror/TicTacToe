@@ -1,18 +1,35 @@
-/** @jsxImportSource @emotion/react */
 import { useMemo, useState } from "react"
-import { BasicButton } from "../buttons/basic-button/BasicButton"
-import { Board } from "./board/Board"
+import { BasicButton } from "../../components/buttons/basic-button/BasicButton"
+import { Board } from "../../components/tictactoe/board/Board"
+import { History } from "../../components/tictactoe/history/History"
 import "./TicTacToe.css"
 
 type Player = "X" | "O"
+export type HistoryEntry = {
+  player: Player
+  position: [number, number]
+}
 
 export const TicTacToe = () => {
-  const [nextPlayer, setNextPlayer] = useState<Player>("X")
+  const [player, setPlayer] = useState<Player>("X")
+  const [history, setHistory] = useState<HistoryEntry[]>([])
   const [squares, setSquares] = useState<string[]>(createEmptySquares())
 
   const gameResult = useMemo(() => calculateWinner(squares), [squares])
   const winner = gameResult && gameResult !== "Tie" ? gameResult : null
   const isTie = gameResult === "Tie"
+
+  const updateSquare = (i: number) => {
+    const newSquares = [...squares]
+    newSquares[i] = player
+    setSquares(newSquares)
+  }
+
+  const updateHistory = (i: number) => {
+    const [row, col] = mapIndexToPosition(i)
+    const newEntry: HistoryEntry = { player: player, position: [row, col] }
+    setHistory([...history, newEntry])
+  }
 
   const play = (i: number) => {
     const squareIsFilled = squares[i] !== null
@@ -21,26 +38,39 @@ export const TicTacToe = () => {
       return
     }
 
-    const newSquares = [...squares]
-    newSquares[i] = nextPlayer
-    setSquares(newSquares)
-    setNextPlayer(nextPlayer === "X" ? "O" : "X")
+    updateSquare(i)
+    updateHistory(i)
+    setPlayer(player === "X" ? "O" : "X")
   }
 
   const resetGame = () => {
     setSquares(createEmptySquares())
-    setNextPlayer("X")
+    setHistory([])
+    setPlayer("X")
   }
 
   return (
-    <div>
+    <>
       <h1>Tic Tac Toe</h1>
-      <Status winner={winner} isTie={isTie} nextPlayer={nextPlayer} />
-      <Board squares={squares} updateSquare={play} />
-      <BasicButton size="large" onClick={resetGame}>
-        Reset Game
-      </BasicButton>
-    </div>
+
+      <div className="tictactoe">
+        <div>
+          <Status winner={winner} isTie={isTie} nextPlayer={player} />
+          <Board squares={squares} onPlay={play} />
+          <BasicButton
+            className="reset-button"
+            size="large"
+            onClick={resetGame}
+          >
+            Reset Game
+          </BasicButton>
+        </div>
+        <div>
+          <h2>Move History</h2>
+          <History history={history} />
+        </div>
+      </div>
+    </>
   )
 }
 
@@ -88,4 +118,10 @@ const calculateWinner = (squares: string[]): Player | "Tie" | null => {
   }
 
   return null
+}
+
+const mapIndexToPosition = (index: number): [number, number] => {
+  const row = Math.floor(index / 3)
+  const col = index % 3
+  return [row, col]
 }

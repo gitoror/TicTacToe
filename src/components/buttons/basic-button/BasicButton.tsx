@@ -1,4 +1,3 @@
-import { css } from "@emotion/react"
 import { cx } from "../../../utils/cx"
 import "./BasicButton.css"
 
@@ -31,11 +30,6 @@ export const BasicButton = ({
     <button className={classes} onClick={onClick} style={style}>
       {logo && <span className="basic-button__logo">{logo}</span>}
       {children}
-      <div
-        css={css`
-          padding: 0.5rem;
-        `}
-      ></div>
     </button>
   )
 }
