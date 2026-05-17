@@ -59,7 +59,7 @@ export const TicTacToe = () => {
           <Board squares={squares} onPlay={play} />
           <BasicButton
             className="reset-button"
-            size="large"
+            size="medium"
             onClick={resetGame}
           >
             Reset Game

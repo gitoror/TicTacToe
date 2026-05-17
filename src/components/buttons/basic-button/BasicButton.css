@@ -17,7 +17,7 @@
 .basic-button--medium {
   padding: 10px 20px;
   font-size: 14px;
-  width: 100px;
+  max-width: 12-0px;
   height: 40px;
 }
 
