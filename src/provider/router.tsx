@@ -3,8 +3,8 @@ import { TicTacToePage } from "../pages/TicTacToePage"
 
 export const RouterApplication = () => {
   return (
-    <BrowserRouter>
-      <Routes>
+    <BrowserRouter basename="/TicTacToe/">
+      <Routes >
         <Route path="/" element={<TicTacToePage />} />
       </Routes>
     </BrowserRouter>
