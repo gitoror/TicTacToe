@@ -32,14 +32,14 @@ const waitFor = (
   message: string
 ) =>
   new Promise<void>((resolve, reject) => {
-    const timer = window.setTimeout(() => reject(new Error(message)), 15_000)
+    const timer = setTimeout(() => reject(new Error(message)), 15_000)
     subscribe(
       () => {
-        window.clearTimeout(timer)
+        clearTimeout(timer)
         resolve()
       },
       (error) => {
-        window.clearTimeout(timer)
+        clearTimeout(timer)
         reject(error)
       }
     )
@@ -106,7 +106,7 @@ export class PeerRoomClient {
       board: emptyBoard(),
       turn: "X",
       mark: "O",
-      ready: true,
+      ready: false,
       round: 1,
       rematchRequested: false,
     }
@@ -115,9 +115,24 @@ export class PeerRoomClient {
       serialization: "json",
     })
     this.connection = connection
-    this.bindGuest(connection)
     await waitFor((resolve, reject) => {
-      connection.once("open", resolve)
+      // An open channel alone does not mean the host accepted this player.
+      // Wait for the authoritative board, especially when rejoining mid-game.
+      this.bindGuest(connection, resolve)
+      connection.once("close", () =>
+        reject(
+          new Error(
+            "This room is full or its creator disconnected. Ask your friend to create a new room."
+          )
+        )
+      )
+      peer.once("error", () =>
+        reject(
+          new Error(
+            "Could not reach that room. Check the code and keep the creator’s tab open."
+          )
+        )
+      )
       connection.once("error", () =>
         reject(
           new Error(
@@ -125,8 +140,12 @@ export class PeerRoomClient {
           )
         )
       )
-    }, "Could not reach that room. Check the code and ask your friend to keep the room open.")
-    this.update(this.room)
+    }, "Could not reach that room. Check the code and ask your friend to keep the room open.").catch(
+      (error) => {
+        this.destroy()
+        throw error
+      }
+    )
     return this.room
   }
 
@@ -155,13 +174,15 @@ export class PeerRoomClient {
 
   destroy() {
     this.closing = true
-    this.connection?.close()
-    this.peer?.destroy()
+    const connection = this.connection
+    const peer = this.peer
     this.connection = undefined
     this.peer = undefined
     this.room = undefined
     this.host = false
     this.votes.clear()
+    connection?.close()
+    peer?.destroy()
   }
 
   private accept(connection: DataConnection) {
@@ -171,18 +192,20 @@ export class PeerRoomClient {
     }
     this.connection = connection
     connection.on("open", () => {
-      if (!this.room) return
+      if (this.connection !== connection || !this.room) return
       this.room = { ...this.room, ready: true }
       this.update(this.room)
+      this.report("")
       this.sendSnapshot()
     })
     connection.on("data", (data) => {
-      if (this.isClientMessage(data)) this.apply(data, "O")
+      if (this.connection === connection && this.isClientMessage(data))
+        this.apply(data, "O")
     })
     connection.on("close", () => {
-      if (this.closing) return
+      if (this.closing || this.connection !== connection) return
       this.connection = undefined
-      this.votes.delete("O")
+      this.votes.clear()
       if (!this.room) return
       this.room = { ...this.room, ready: false, rematchRequested: false }
       this.update(this.room)
@@ -196,28 +219,31 @@ export class PeerRoomClient {
     )
   }
 
-  private bindGuest(connection: DataConnection) {
+  private bindGuest(connection: DataConnection, receivedSnapshot: () => void) {
     connection.on("data", (data) => {
+      if (this.connection !== connection) return
       if (!this.isHostMessage(data)) return
       if (data.type === "error") this.report(data.message)
       else {
+        if (data.room.id !== this.room?.id) return
         this.room = { ...data.room, mark: "O" }
         this.update(this.room)
         this.report("")
+        receivedSnapshot()
       }
     })
-    connection.on(
-      "close",
-      () =>
-        !this.closing &&
-        this.report("The room closed because its creator disconnected.")
-    )
-    connection.on(
-      "error",
-      () =>
-        !this.closing &&
-        this.report("The connection to the room was interrupted.")
-    )
+    const disconnected = () => {
+      if (this.closing || this.connection !== connection) return
+      if (this.room) {
+        this.room = { ...this.room, ready: false }
+        this.update(this.room)
+      }
+      this.report(
+        "Connection lost. Leave this board and ask your friend for a new room."
+      )
+    }
+    connection.on("close", disconnected)
+    connection.on("error", disconnected)
   }
 
   private apply(message: ClientMessage, mark: Mark) {
@@ -294,7 +320,25 @@ export class PeerRoomClient {
     const message = data as Record<string, unknown>
     return (
       (message.type === "error" && typeof message.message === "string") ||
-      (message.type === "snapshot" && !!message.room)
+      (message.type === "snapshot" && this.isRoom(message.room))
+    )
+  }
+
+  private isRoom(data: unknown): data is PeerRoom {
+    if (!data || typeof data !== "object") return false
+    const room = data as Record<string, unknown>
+    return (
+      typeof room.id === "string" &&
+      Array.isArray(room.board) &&
+      room.board.length === 9 &&
+      room.board.every(
+        (cell) => cell === null || cell === "X" || cell === "O"
+      ) &&
+      (room.turn === "X" || room.turn === "O") &&
+      room.ready === true &&
+      Number.isInteger(room.round) &&
+      Number(room.round) > 0 &&
+      typeof room.rematchRequested === "boolean"
     )
   }
 }

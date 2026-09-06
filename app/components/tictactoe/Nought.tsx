@@ -251,8 +251,8 @@ export default function Nought() {
             : !room.ready
               ? "Waiting for your friend…"
               : room.mark === turn
-                ? "Your move."
-                : "Your friend’s move."
+                ? `Your turn (${room.mark}). Choose a square.`
+                : `Waiting for ${turn} to play.`
           : mode === "train"
             ? "Your move. Make it count."
             : `${turn}’s turn. Take the board.`
@@ -570,9 +570,13 @@ export default function Nought() {
                       {copied ? "Invite copied ✓" : "Copy invite link ↗"}
                     </button>
                     <p className="setting-note">
-                      {room.ready
-                        ? "Both players have joined. You’re ready to play."
-                        : "Waiting for the second player to join."}
+                      {!room.ready
+                        ? "Waiting for a player connection."
+                        : end.winner || end.draw
+                          ? "Round complete. Both players can request a rematch."
+                          : room.mark === room.turn
+                            ? `You’re ${room.mark}. It’s your turn — choose an empty square.`
+                            : `You’re ${room.mark}. Wait for ${room.turn} to play${room.board.every((cell) => cell === null) ? " first — the room creator starts" : ""}.`}
                     </p>
                     <button
                       className="text-button"
