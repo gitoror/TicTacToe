@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import ChallengeSelect from "./ChallengeSelect"
+import type { PeerRoom, PeerRoomClient } from "./peerRoom.client"
 import {
   emptyBoard,
   explain,
@@ -10,14 +11,7 @@ import {
   type Mark,
 } from "./engine"
 type Mode = "train" | "local" | "online"
-type Remote = {
-  id: string
-  board: Board
-  turn: Mark
-  mark: Mark
-  ready: boolean
-  round: number
-  rematchRequested: boolean
+type Remote = PeerRoom & {
   token?: string
 }
 const lessons = [
@@ -51,6 +45,7 @@ export default function Nought() {
   const [copied, setCopied] = useState(false)
   const [lesson, setLesson] = useState(0)
   const [sound, setSound] = useState(false)
+  const peerRoom = useRef<PeerRoomClient | null>(null)
   const board =
     mode === "online" && room ? room.board : history[history.length - 1]
   const turn: Mark =
@@ -84,7 +79,7 @@ export default function Nought() {
     return () => clearTimeout(timer)
   }, [thinking, board, turn, difficulty])
   useEffect(() => {
-    if (mode !== "online" || !room) return
+    if (import.meta.env.VITE_STATIC_PAGES || mode !== "online" || !room) return
     const controller = new AbortController()
     let running = false
     const timer = setInterval(async () => {
@@ -117,12 +112,23 @@ export default function Nought() {
       controller.abort()
     }
   }, [mode, room?.id, room?.token])
+  useEffect(
+    () => () => {
+      peerRoom.current?.destroy()
+    },
+    []
+  )
   function reset() {
     setHistory([emptyBoard()])
     setHint(false)
     setFeedback("A fresh board. A little strategy. Your next great move.")
   }
   function changeMode(next: Mode) {
+    if (import.meta.env.VITE_STATIC_PAGES && next !== "online") {
+      peerRoom.current?.destroy()
+      peerRoom.current = null
+      setRoom(null)
+    }
     setMode(next)
     reset()
     setScores({ X: 0, O: 0, draw: 0 })
@@ -152,6 +158,24 @@ export default function Nought() {
     setBusy(true)
     setError("")
     try {
+      if (import.meta.env.VITE_STATIC_PAGES) {
+        if (!peerRoom.current) {
+          const { PeerRoomClient } = await import("./peerRoom.client")
+          peerRoom.current = new PeerRoomClient(setRoom, setError)
+        }
+        let connectedRoom: PeerRoom | undefined
+        if (action === "create") connectedRoom = await peerRoom.current.create()
+        else if (action === "join")
+          connectedRoom = await peerRoom.current.join(code)
+        else peerRoom.current.act(action as "move" | "rematch", index)
+        if (connectedRoom) {
+          setCode(connectedRoom.id)
+          const roomUrl = new URL(window.location.href)
+          roomUrl.searchParams.set("room", connectedRoom.id)
+          window.history.replaceState(null, "", roomUrl)
+        }
+        return
+      }
       const id = room?.id ?? code.trim().toUpperCase(),
         saved = sessionStorage.getItem(`xo-room-${id}`)
       const response = await fetch("/api/room", {
@@ -491,13 +515,7 @@ export default function Nought() {
                 <p className="setting-note">
                   Send an invite. Take turns. Settle the score.
                 </p>
-                {import.meta.env.VITE_STATIC_PAGES ? (
-                  <p className="setting-note" role="status">
-                    Online rooms aren’t available on this version. Train against
-                    the AI or choose Play together to share this screen with a
-                    friend.
-                  </p>
-                ) : !room ? (
+                {!room ? (
                   <>
                     <button
                       className="primary full"
@@ -559,9 +577,14 @@ export default function Nought() {
                     <button
                       className="text-button"
                       onClick={() => {
+                        peerRoom.current?.destroy()
+                        peerRoom.current = null
                         setRoom(null)
                         reset()
                         setError("")
+                        const roomUrl = new URL(window.location.href)
+                        roomUrl.searchParams.delete("room")
+                        window.history.replaceState(null, "", roomUrl)
                       }}
                     >
                       Leave board
@@ -575,7 +598,7 @@ export default function Nought() {
                 )}
                 <p className="room-note">
                   {import.meta.env.VITE_STATIC_PAGES
-                    ? "Online play is available when this game is hosted with its room server."
+                    ? "On GitHub Pages, moves travel directly between both browsers. The room creator must keep this tab open."
                     : "Rooms last up to 2 hours without a move. Keep this tab open to stay in the game."}
                 </p>
               </section>

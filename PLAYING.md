@@ -20,9 +20,11 @@ prerendered build with the correct router and asset prefixes. The workflow runs
 `node scripts/prepare-pages.mjs` to place the prerendered HTML at the artifact
 root and verify its asset references, then uploads `build/client`.
 
-Pages supports AI training and same-screen play. It cannot execute the online
-room API, so that build displays an availability message instead of room
-controls. Use the normal Node deployment above for online multiplayer.
+Pages supports every game mode. Online rooms use a direct WebRTC data connection
+between the two browsers, brokered by the public PeerJS Cloud signaling service.
+The player who creates the room owns its state and must keep the page open. Some
+restricted corporate networks or symmetric NAT configurations may require a TURN
+relay or the normal Node deployment.
 
 To reproduce locally, set `GITHUB_PAGES=true` and `PAGES_BASE_PATH=/TicTacToe`,
 then run `npm run build` and `node scripts/prepare-pages.mjs`. Unset these variables
