@@ -7,9 +7,28 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Dependencies and generated output
+node_modules/
+/build/
+/dist/
+/dist-ssr/
+/.react-router/
+/.vite/
+/.cache/
+*.tsbuildinfo
+
+# Test reports
+/coverage/
+/.nyc_output/
+/playwright-report/
+/test-results/
+
+# Local environment configuration (keep shareable templates)
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
 *.local
 
 # Editor directories and files
@@ -17,6 +36,8 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
+Desktop.ini
 *.suo
 *.ntvs*
 *.njsproj
