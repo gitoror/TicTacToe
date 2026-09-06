@@ -235,7 +235,11 @@ export default function Nought() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <a className="brand" href="/" aria-label="Nought home">
+        <a
+          className="brand"
+          href={import.meta.env.BASE_URL}
+          aria-label="Nought home"
+        >
           <span className="brand-icon">
             ×<span>○</span>
           </span>
@@ -487,7 +491,13 @@ export default function Nought() {
                 <p className="setting-note">
                   Send an invite. Take turns. Settle the score.
                 </p>
-                {!room ? (
+                {import.meta.env.VITE_STATIC_PAGES ? (
+                  <p className="setting-note" role="status">
+                    Online rooms aren’t available on this version. Train against
+                    the AI or choose Play together to share this screen with a
+                    friend.
+                  </p>
+                ) : !room ? (
                   <>
                     <button
                       className="primary full"
@@ -564,8 +574,9 @@ export default function Nought() {
                   </p>
                 )}
                 <p className="room-note">
-                  Rooms last up to 2 hours without a move. Keep this tab open to
-                  stay in the game.
+                  {import.meta.env.VITE_STATIC_PAGES
+                    ? "Online play is available when this game is hosted with its room server."
+                    : "Rooms last up to 2 hours without a move. Keep this tab open to stay in the game."}
                 </p>
               </section>
             ) : (

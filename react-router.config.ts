@@ -1,7 +1,10 @@
-import type { Config } from '@react-router/dev/config'
+import type { Config } from "@react-router/dev/config"
+
+const githubPages = process.env.GITHUB_PAGES === "true"
 
 export default {
-  // Config options...
-  // Server-side render by default, to enable SPA mode set this to `false`
-  ssr: true,
+  // Pages hosts static files; the default build keeps the online room server.
+  ssr: !githubPages,
+  prerender: githubPages,
+  basename: githubPages ? process.env.PAGES_BASE_PATH || "/" : "/",
 } satisfies Config
